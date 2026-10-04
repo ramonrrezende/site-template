@@ -1,0 +1,78 @@
+name: Deploy
+
+# Publica o export estático no S3 e invalida o CloudFront.
+#
+# Configuração em Settings → Secrets and variables → Actions → Variables:
+#   AWS_ROLE_ARN                         role assumida via OIDC
+#   AWS_REGION                           opcional, padrão us-east-1
+#   S3_BUCKET                            bucket do site
+#   CLOUDFRONT_DISTRIBUTION_ID           distribuição do site
+#   CLOUDFRONT_REDIRECT_DISTRIBUTION_ID  opcional: distribuição que só
+#                                        redireciona (ex.: domínio sem www)
+#
+# Sem AWS_ROLE_ARN o job é pulado: projetos sem AWS não ficam com o
+# workflow quebrando a cada push.
+
+on:
+  push:
+    branches: [master]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  # OIDC: troca o token do GitHub por credenciais temporárias da AWS, sem
+  # chave de acesso guardada em secret.
+  id-token: write
+
+concurrency:
+  group: deploy
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    if: vars.AWS_ROLE_ARN != ''
+    runs-on: ubuntu-latest
+    env:
+      NEXT_TELEMETRY_DISABLED: 1
+    steps:
+      - uses: actions/checkout@v7
+
+      # Sem cache de dependências: este job tem credenciais da AWS, e um
+      # cache envenenado rodaria código com elas.
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+
+      - run: npm ci
+      - run: npm run build
+
+      - uses: aws-actions/configure-aws-credentials@v6
+        with:
+          role-to-assume: ${{ vars.AWS_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION || 'us-east-1' }}
+
+      # Arquivos com hash no nome nunca mudam de conteúdo: cache de um ano.
+      - name: Envia os assets versionados
+        run: >
+          aws s3 sync out/_next/static "s3://${{ vars.S3_BUCKET }}/_next/static"
+          --cache-control "public,max-age=31536000,immutable"
+
+      # HTML e o resto: o navegador revalida a cada visita. Os assets antigos
+      # ficam no bucket de propósito (o --exclude os protege do --delete):
+      # páginas ainda em cache em algum navegador apontam para eles.
+      - name: Envia o restante
+        run: >
+          aws s3 sync out "s3://${{ vars.S3_BUCKET }}"
+          --delete --exclude "_next/static/*"
+          --cache-control "public,max-age=0,must-revalidate"
+
+      - name: Invalida o CloudFront
+        run: >
+          aws cloudfront create-invalidation
+          --distribution-id "${{ vars.CLOUDFRONT_DISTRIBUTION_ID }}" --paths "/*"
+
+      - name: Invalida o CloudFront do redirecionamento
+        if: vars.CLOUDFRONT_REDIRECT_DISTRIBUTION_ID != ''
+        run: >
+          aws cloudfront create-invalidation
+          --distribution-id "${{ vars.CLOUDFRONT_REDIRECT_DISTRIBUTION_ID }}" --paths "/*"

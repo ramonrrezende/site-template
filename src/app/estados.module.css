@@ -1,0 +1,27 @@
+/* Páginas de estado: 404 e erro. */
+.estado {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--espaco-4);
+  padding-block: var(--secao-vertical);
+  padding-inline: var(--respiro-lateral);
+}
+
+.estado h1 {
+  font-size: var(--texto-h2);
+}
+
+.estado p {
+  color: var(--cor-texto-suave);
+}
+
+.botao {
+  padding: var(--espaco-2) var(--espaco-6);
+  border: 2px solid var(--cor-marca);
+  border-radius: var(--raio-pilula);
+  background: transparent;
+  color: var(--cor-marca);
+  font-weight: 600;
+  cursor: pointer;
+}

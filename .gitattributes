@@ -1,0 +1,3 @@
+# Scripts que rodam dentro do container precisam de LF mesmo quando o
+# repositório é clonado no Windows (o core.autocrlf trocaria por CRLF).
+*.sh text eol=lf

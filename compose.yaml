@@ -1,0 +1,31 @@
+# Desenvolvimento:  docker compose up                                   → http://localhost:3000
+# Preview estático: docker compose --profile preview up --build preview → http://localhost:8080
+#
+# As portas mudam pelo .env (veja .env.example), o que permite rodar dois
+# projetos derivados deste template ao mesmo tempo.
+services:
+  web:
+    build:
+      context: .
+      target: dev
+    init: true
+    ports:
+      - "${PORT:-3000}:3000"
+    volumes:
+      - .:/app
+      # Ficam em volumes do Docker, fora da pasta do projeto: os binários de
+      # Linux não vão parar no host e nada é criado lá com outro dono.
+      - node_modules:/app/node_modules
+      - next:/app/.next
+
+  preview:
+    profiles: [preview]
+    build:
+      context: .
+      target: preview
+    ports:
+      - "${PREVIEW_PORT:-8080}:80"
+
+volumes:
+  node_modules:
+  next:

@@ -1,0 +1,54 @@
+.pagina {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: flex-start;
+  gap: var(--espaco-6);
+  min-height: 100dvh;
+  padding-block: var(--secao-vertical);
+  padding-inline: var(--respiro-lateral);
+}
+
+.status {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--espaco-2);
+  font-size: 0.875rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--cor-texto-suave);
+}
+
+.indicador {
+  width: 0.625rem;
+  height: 0.625rem;
+  border-radius: 50%;
+  background-color: var(--cor-sucesso);
+}
+
+.pagina h1 {
+  font-size: var(--texto-h1);
+}
+
+.descricao {
+  max-width: 60ch;
+  font-size: 1.125rem;
+  color: var(--cor-texto-suave);
+}
+
+.passos {
+  display: grid;
+  gap: var(--espaco-2);
+  max-width: 40rem;
+  padding: var(--espaco-6);
+  border: 1px solid var(--cor-borda);
+  border-radius: var(--raio);
+  background-color: var(--cor-fundo-alt);
+  list-style: none;
+}
+
+.passos code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.9em;
+}

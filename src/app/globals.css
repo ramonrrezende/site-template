@@ -1,0 +1,124 @@
+/*
+ * Estilos globais: tokens de design e um reset mínimo. O resto mora nos
+ * CSS Modules de cada componente.
+ *
+ * Os tokens são o ponto de troca da identidade visual: mude cores, fonte e
+ * medidas aqui. Se o projeto adotar uma biblioteca de UI, mapeie estes
+ * tokens para o tema dela em vez de duplicar os valores.
+ */
+
+:root {
+  /* Cores */
+  --cor-fundo: #ffffff;
+  --cor-fundo-alt: #f5f6f8;
+  --cor-texto: #1d2230;
+  --cor-texto-suave: #5a6172;
+  --cor-borda: #e3e5ea;
+  --cor-marca: #2a4fa8;
+  --cor-marca-escura: #1f3c82;
+  --cor-marca-suave: #e9eef9;
+  --cor-marca-contraste: #ffffff;
+  --cor-sucesso: #1f8a4c;
+
+  /* Tipografia. --fonte-carregada vem do next/font, no layout. */
+  --fonte-texto: var(--fonte-carregada), system-ui, sans-serif;
+  --texto-h1: clamp(2.25rem, 1.6rem + 2.8vw, 3.5rem);
+  --texto-h2: clamp(1.75rem, 1.4rem + 1.5vw, 2.5rem);
+
+  /* Espaçamento */
+  --espaco-1: 0.25rem;
+  --espaco-2: 0.5rem;
+  --espaco-3: 0.75rem;
+  --espaco-4: 1rem;
+  --espaco-6: 1.5rem;
+  --espaco-8: 2rem;
+  --espaco-12: 3rem;
+  --secao-vertical: clamp(3rem, 2rem + 5vw, 6rem);
+
+  /* Layout */
+  --largura-maxima: 72rem;
+  --margem-lateral: 1.25rem;
+  /*
+   * Padding lateral que limita o conteúdo à largura máxima sem precisar de
+   * um elemento interno: no mínimo a margem, e o que sobrar dividido entre
+   * os dois lados. O 100% se resolve no elemento que usa a variável.
+   */
+  --respiro-lateral: max(var(--margem-lateral), (100% - var(--largura-maxima)) / 2);
+  --raio: 0.75rem;
+  --raio-pilula: 999px;
+}
+
+/* Reset mínimo */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+* {
+  margin: 0;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  html {
+    scroll-behavior: smooth;
+  }
+}
+
+/* Coluna que empurra o rodapé para o fim em páginas curtas. */
+body {
+  display: flex;
+  flex-direction: column;
+  min-height: 100dvh;
+  font-family: var(--fonte-texto);
+  line-height: 1.6;
+  color: var(--cor-texto);
+  background-color: var(--cor-fundo);
+  -webkit-font-smoothing: antialiased;
+}
+
+main {
+  flex: 1;
+}
+
+img,
+picture,
+svg,
+video {
+  display: block;
+  max-width: 100%;
+}
+
+input,
+button,
+textarea,
+select {
+  font: inherit;
+}
+
+h1,
+h2,
+h3 {
+  line-height: 1.15;
+  text-wrap: balance;
+}
+
+p {
+  text-wrap: pretty;
+}
+
+a {
+  color: var(--cor-marca);
+  text-underline-offset: 0.15em;
+}
+
+:focus-visible {
+  outline: 2px solid var(--cor-marca);
+  outline-offset: 2px;
+}
