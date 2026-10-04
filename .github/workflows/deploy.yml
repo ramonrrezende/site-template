@@ -2,16 +2,21 @@ name: Deploy
 
 # Publica o export estático no S3 e invalida o CloudFront.
 #
-# Configuração em Settings → Secrets and variables → Actions → Variables:
-#   AWS_ROLE_ARN                         role assumida via OIDC
+# Configuração em Settings → Secrets and variables → Actions.
+#
+# Secrets (access key do usuário IAM de deploy):
+#   AWS_ACCESS_KEY_ID
+#   AWS_SECRET_ACCESS_KEY
+#
+# Variables:
 #   AWS_REGION                           opcional, padrão us-east-1
 #   S3_BUCKET                            bucket do site
 #   CLOUDFRONT_DISTRIBUTION_ID           distribuição do site
 #   CLOUDFRONT_REDIRECT_DISTRIBUTION_ID  opcional: distribuição que só
 #                                        redireciona (ex.: domínio sem www)
 #
-# Sem AWS_ROLE_ARN o job é pulado: projetos sem AWS não ficam com o
-# workflow quebrando a cada push.
+# Sem S3_BUCKET o job é pulado: projetos sem AWS não ficam com o workflow
+# quebrando a cada push.
 
 on:
   push:
@@ -20,9 +25,6 @@ on:
 
 permissions:
   contents: read
-  # OIDC: troca o token do GitHub por credenciais temporárias da AWS, sem
-  # chave de acesso guardada em secret.
-  id-token: write
 
 concurrency:
   group: deploy
@@ -30,7 +32,7 @@ concurrency:
 
 jobs:
   deploy:
-    if: vars.AWS_ROLE_ARN != ''
+    if: vars.S3_BUCKET != ''
     runs-on: ubuntu-latest
     env:
       NEXT_TELEMETRY_DISABLED: 1
@@ -48,7 +50,8 @@ jobs:
 
       - uses: aws-actions/configure-aws-credentials@v6
         with:
-          role-to-assume: ${{ vars.AWS_ROLE_ARN }}
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ vars.AWS_REGION || 'us-east-1' }}
 
       # Arquivos com hash no nome nunca mudam de conteúdo: cache de um ano.

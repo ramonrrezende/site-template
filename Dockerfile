@@ -10,11 +10,14 @@ ENV NEXT_TELEMETRY_DISABLED=1 \
 WORKDIR /app
 RUN chown node:node /app
 USER node
-COPY --chown=node:node package.json package-lock.json ./
+# O `*` deixa o lockfile opcional: o template não versiona o dele, e um
+# projeto recém-criado só o ganha no primeiro `docker compose up`.
+COPY --chown=node:node package.json package-lock.json* ./
 # O hash diz ao entrypoint de dev que estas dependências batem com o lockfile.
 # A pasta .next é criada aqui para que o volume nomeado herde o dono `node`;
 # se o Docker a criasse, ela nasceria como root e o Next não conseguiria escrever.
-RUN npm ci --no-audit --no-fund \
+RUN if [ -f package-lock.json ]; then npm ci --no-audit --no-fund; \
+    else npm install --no-audit --no-fund; fi \
  && sha256sum package-lock.json | cut -d' ' -f1 > node_modules/.lock-hash \
  && mkdir .next
 

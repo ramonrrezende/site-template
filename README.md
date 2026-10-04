@@ -21,7 +21,7 @@ rodando. Todo o conteúdo é do projeto que nasce daqui.
   `src/app/globals.css`.
 - **Docker** para desenvolvimento e para o preview da build de produção.
 - **GitHub Actions**: CI (lint, typecheck, build) em pull request e deploy no
-  S3 + CloudFront via OIDC no push em `master`.
+  S3 + CloudFront no push em `master`.
 
 ## Começar um projeto novo
 
@@ -33,6 +33,12 @@ cd meu-site && rm -rf .git && git init -b master
 ```
 
 Troque o `name` no `package.json` pelo nome do projeto.
+
+O template não traz `package-lock.json`, para que cada projeto nasça com as
+versões mais recentes dentro das faixas do `package.json`, e não com as da
+época em que o template foi atualizado. O primeiro `docker compose up` gera o
+lockfile na pasta do projeto. **Commite-o antes do primeiro push**: CI e
+deploy instalam com `npm ci`, que falha sem ele.
 
 ## Rodar
 
@@ -70,7 +76,8 @@ copie `.env.example` para `.env` e ajuste `PORT` e `PREVIEW_PORT`.
   ignoradas (estão no `.gitignore`).
 - Ao subir, o container compara o hash do `package-lock.json` com o da última
   instalação e roda `npm ci` só se ele mudou, por exemplo depois de um
-  `git pull` que mexeu nas dependências.
+  `git pull` que mexeu nas dependências. Sem lockfile (projeto recém-criado),
+  roda `npm install`, que o gera.
 - O container roda como o usuário `node` (uid 1000), que coincide com o
   usuário padrão da maioria das instalações Linux. Assim, os arquivos criados
   pelo container na sua pasta ficam com o seu usuário.
@@ -134,16 +141,20 @@ duplicar valores.
 ## Deploy (S3 + CloudFront)
 
 O workflow `.github/workflows/deploy.yml` roda a cada push em `master`. Ele
-é pulado enquanto `AWS_ROLE_ARN` não estiver configurada. Para ativar:
+é pulado enquanto `S3_BUCKET` não estiver configurada. Para ativar:
 
-1. Na AWS, crie uma role que confie no provedor OIDC do GitHub (restrita a
-   este repositório) e permita `s3:ListBucket`, `s3:PutObject` e
-   `s3:DeleteObject` no bucket, e `cloudfront:CreateInvalidation` nas
-   distribuições.
-2. No GitHub, em *Settings → Secrets and variables → Actions → Variables*,
-   crie `AWS_ROLE_ARN`, `S3_BUCKET` e `CLOUDFRONT_DISTRIBUTION_ID`. São
-   opcionais `AWS_REGION` (padrão `us-east-1`) e
-   `CLOUDFRONT_REDIRECT_DISTRIBUTION_ID`.
+1. Na AWS, crie um usuário IAM com acesso só a `s3:ListBucket`,
+   `s3:GetObject`, `s3:PutObject` e `s3:DeleteObject` no bucket, e
+   `cloudfront:CreateInvalidation` nas distribuições. Gere uma access key
+   para ele.
+2. No GitHub, em *Settings → Secrets and variables → Actions*:
+   - **Secrets:** `AWS_ACCESS_KEY_ID` e `AWS_SECRET_ACCESS_KEY`
+   - **Variables:** `S3_BUCKET` e `CLOUDFRONT_DISTRIBUTION_ID`. São
+     opcionais `AWS_REGION` (padrão `us-east-1`) e
+     `CLOUDFRONT_REDIRECT_DISTRIBUTION_ID`.
+
+A access key não expira: rotacione de tempos em tempos e revogue na hora se
+houver suspeita de vazamento.
 
 O export usa `trailingSlash: true`, que gera `rota/index.html`. O endpoint de
 site do S3 resolve isso sozinho. Se o CloudFront usar o bucket como origem
@@ -155,6 +166,11 @@ resto, com revalidação a cada visita.
 
 ## Notas de manutenção
 
+- **Lockfile do template**: não é versionado (veja *Começar um projeto
+  novo*). Rodar o template localmente gera um `package-lock.json`, que não
+  deve ser commitado aqui. Os workflows são os mesmos dos projetos derivados
+  e dependem do lockfile, então o CI falha em pull request no próprio
+  template; eles existem para rodar nos projetos.
 - **Node**: a versão fica em `.nvmrc` (lida pelo CI) e no `ARG NODE_VERSION`
   do `Dockerfile`. Mude as duas juntas.
 - **ESLint 9**: fica nesta versão, mesmo com o aviso de "no longer
